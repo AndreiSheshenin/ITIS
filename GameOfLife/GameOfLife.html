@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Game of Life</title>
+        
+        <style>
+            body {
+                text-align: center;
+            }
+            button {
+                padding: 10px 20px;
+                margin: 5px;
+            }
+            .controls {
+                margin-top: 20px;
+            }
+            </style>
+    </head>
+
+    <body>
+        <h1>Game of Life</h1>
+
+        <canvas id="myCanvas" width="400px" height="400px" style="border:1px solid black;">
+        </canvas>
+
+        <div class="controls">
+            <button id="startPauseButton">Start</button>
+            <button id="resetButton">Reset</button>
+        </div>
+
+        <script>
+            const canvas = document.getElementById("myCanvas");
+            const ctx = canvas.getContext("2d");
+
+            let cellSize = 20;
+            let fieldSize = 20; 
+
+            // Двумерные массивы настоящего состояния поля и следующего
+            let curField = new Array(fieldSize);
+            let nextField = new Array(fieldSize);
+
+            for (let i = 0; i < fieldSize; i++) {
+                nextField[i] = new Array(fieldSize);
+                curField[i] = new Array(fieldSize);
+            }
+            
+            //////////////////////////////////////////////////////////////////////////
+            
+            //Заполнение настоящего поля случайными значениями, определяя живость клетки
+            function init() {
+                for (let i = 0; i < fieldSize; i++) {
+                    for (let j = 0; j < fieldSize; j++) {
+                        if(Math.random() > 0.7)
+				            curField[i][j] = 1
+			            else
+				            curField[i][j] = 0;
+                    }
+                }
+            }
+
+            function neighborCount(row, column) {
+                let sum = 0;
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        // Замкнутый подсчет соседей
+                        sum += curField[(row + i + fieldSize) % fieldSize][(column + j + fieldSize) % fieldSize];
+                    }
+                }
+                sum -= curField[row][column];
+                return sum;
+            }
+
+            function makeStep() {
+                // Вычисление нового состояния поля
+                for (let i = 0; i < fieldSize; i++) {
+                    for (let j = 0; j < fieldSize; j++) {
+                        let liveNeighbours = neighborCount(i, j);
+                        nextField[i][j] = (curField[i][j] == 1 ? (liveNeighbours == 2 || liveNeighbours == 3 ? 1 : 0)
+                                                               : (liveNeighbours == 3 ? 1 : 0));
+                    }
+                }
+                //Обновление поля
+                for (let i = 0; i < fieldSize; i++) {
+                    for (let j = 0; j < fieldSize; j++) {
+                        curField[i][j] = nextField[i][j];
+                    }
+                }
+            }
+
+            function draw() {
+                for (let i = 0; i < fieldSize; i++) {
+                    for (let j = 0; j < fieldSize; j++) {
+                        ctx.fillStyle = curField[i][j] === 1 ? "red" : "white";
+                        ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                        ctx.strokeStyle = "black";
+                        ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+
+            ////////////////// БЛОК УПРАВЛЕНИЯ ИГРОЙ //////////////////////////////////////
+
+            let isRunning = false;
+            let speed = 300;
+            let interval;
+
+            function startPauseGame() {
+                const button = document.getElementById("startPauseButton");
+                if (isRunning) {
+                    clearInterval(interval);
+                    button.textContent = "Start";
+                } else {
+                    interval = setInterval(() => {makeStep(), draw()}, speed);
+                    button.textContent = "Pause";
+                }
+                isRunning = !isRunning;
+            }
+
+            function resetGame() {
+                clearInterval(interval);
+                isRunning = false;
+                document.getElementById("startPauseButton").textContent = "Start";
+                init();
+                draw();
+            }
+
+            // Инициализация
+            init();
+            draw();
+
+            document.getElementById("startPauseButton").addEventListener("click", startPauseGame);
+            document.getElementById("resetButton").addEventListener("click", resetGame);
+
+        </script>
+    </body>
+</html>

@@ -2,7 +2,6 @@ function boyerMoore(text, pattern) {
     const textLength = text.length;
     const patternLength = pattern.length; 
 
-    // Создание таблицы плохих символов
     function buildBadCharTable(pattern) {
         const table = {};
 
@@ -11,44 +10,43 @@ function boyerMoore(text, pattern) {
         return table;
     }
 
-    // Функция для вычисления сдвига по хорошему суффиксу
-    function goodSuffixShift(pattern, l) {
-        const m = pattern.length; 
-        const suffix = pattern.slice(m - l);  // Извлекаем суффикс длины l из конца паттерна
+    function buildGoodSuffixShift(pattern, suffixLenght) { 
+        const suffix = pattern.slice(patternLength - suffixLenght); 
+
         // Ищем этот суффикс в левой части паттерна
-        for (let i = m - l - 1; i >= 0; i--) {
-            if (pattern.slice(i, i + l) == suffix) {
+        for (let i = patternLength - suffixLenght - 1; i >= 0; i--) {
+            if (pattern.slice(i, i + suffixLenght) == suffix) {
                 // Если нашли совпадение суффикса, возвращаем сдвиг
-                return m - l - i;  
+                return patternLength - suffixLenght - i;  
             }
         }
+
         // Если не нашли совпадений, сдвигаем паттерн на его полную длину
-        return m;
+        return patternLength;
     }
 
     const badCharTable = buildBadCharTable(pattern); 
     let shift = 0;  // Начальное смещение (позиция паттерна в тексте)
     const result = []; 
 
-    // Цикл, который выполняется до тех пор, пока паттерн может быть сопоставлен с текстом
+    // Цикл, который выполняется до тех пор, пока паттерн может быть размещен в конце текста
     while (shift <= textLength - patternLength) {
-        let j = patternLength - 1;  // Индекс для сравнения с последним символом паттерна
-        // Сравниваем символы паттерна с символами текста справа налево
-        while (j >= 0 && pattern[j] == text[shift + j]) {
-            j--;  // Если символы совпали, двигаем указатель на предыдущий символ
-        }
+        let pointer = patternLength - 1;
 
-        // Если j < 0, значит, все символы паттерна совпали с текстом
-        if (j < 0) {
-            result.push(shift);  // Сохраняем позицию совпадения
-            shift += patternLength;  // Переходим к следующей возможной позиции для поиска
+        // Сравниваем символы паттерна с символами текста справа налево
+        while ((pointer >= 0) && (pattern[pointer] == text[shift + pointer]))
+            pointer--;  // Если символы совпали, двигаем указатель на предыдущий символ
+
+        // Если j == -1, значит, все символы паттерна совпали с текстом
+        if (pointer == -1) {
+            result.push(shift); 
+            shift += patternLength;
         } else {
-            // Если не совпало, вычисляем сдвиг по плохому символу
-            const badCharShift = j - (badCharTable[text[shift + j]] || -1);
-            // Вычисляем сдвиг по хорошему суффиксу (если совпали части паттерна)
-            const goodSuffix = goodSuffixShift(pattern, patternLength - 1 - j);
-            // Сдвигаем паттерн на максимальный сдвиг из двух вариантов
-            shift += Math.max(badCharShift, goodSuffix);
+            // Если не совпало, вычисляем сдвиги по плохому символу и хорошему суффиксу
+            const badCharShift = (badCharTable[text[pointer]] || pattern.length);
+            const goodSuffixShift = buildGoodSuffixShift(pattern, patternLength - 1 - pointer);
+
+            shift += Math.max(badCharShift, goodSuffixShift);
         }
     }
 
@@ -56,7 +54,7 @@ function boyerMoore(text, pattern) {
 }
 
 // Пример использования
-const text = "abccabcbbccabcdabcdabc";  
-const pattern = "abc"; 
+const text = "there is some example";  
+const pattern = "example"; 
 const result = boyerMoore(text, pattern);  
 console.log("Позиции совпадений:", result);
